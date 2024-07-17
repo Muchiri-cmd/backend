@@ -2,6 +2,11 @@ const express = require('express')
 const app = express()
 app.use(express.json())//json parser
 
+const cors = require('cors')
+app.use(cors())
+
+app.use(express.static('dist'))
+
 const requestLogger = (req,res,next) => {
     console.log('Method:',req.method);
     console.log('Path:',req.path);
@@ -52,7 +57,6 @@ app.get('/api/notes/:id',(req,res)=>{
         res.statusMessage="Ooooooops. that note doesnt exist"
         res.status(404).end()
     }
-    res.json(note)
 
 })
 app.delete('/api/notes/:id',(req,res)=>{
@@ -85,7 +89,7 @@ const unknownEndPoint = (req,res)=>{
 
 app.use(unknownEndPoint)
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT,()=>{
     console.log(`Server running on ${PORT}`);
 })
