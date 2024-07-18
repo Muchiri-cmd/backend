@@ -16,6 +16,7 @@ const requestLogger = (req,res,next) => {
 }
 app.use(requestLogger)
 
+const Note = require('./models/note')
 let notes = [
         {
           id: 1,
@@ -44,42 +45,31 @@ app.get('/',(req,res) => {
     res.send('<h1>Hello World!</h1>')
 })
 app.get('/api/notes',(req,res)=>{
-    res.json(notes)
+    Note.find({}).then(notes=>res.json(notes))
 })
 
 app.get('/api/notes/:id',(req,res)=>{
-    const id = req.params.id
-    const note = notes.find(note => note.id == id)
-
-    if (note){
-        res.json(note)
-    } else {
-        res.statusMessage="Ooooooops. that note doesnt exist"
-        res.status(404).end()
-    }
-
+    Note.findById(req.params.id).then(note=>res.json(note))
 })
+
 app.delete('/api/notes/:id',(req,res)=>{
     const id = req.params.id
     notes = notes.filter(note=> note.id!=id )
     res.status(204).end()
 })
 app.post('/api/notes',(req,res)=>{
-
     const body = req.body 
 
     if (!body.content){
-        return res.status(400).json({
-            error:'content missing'
-        })
+        return res.status(400).json({error:'content missing'})
     }
-    const note ={
+
+    const note = new Note({
         content:body.content,
         important:Boolean(body.important) || false,
-        id:generateId(),
-    }
-    notes = notes.concat(note)
-    res.json(note)   
+        // id:generateId(),
+    })
+    note.save().then(savedNote=>res.json(savedNote))
 })
 
 
@@ -89,7 +79,8 @@ const unknownEndPoint = (req,res)=>{
 
 app.use(unknownEndPoint)
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT,()=>{
     console.log(`Server running on ${PORT}`);
 })
+
