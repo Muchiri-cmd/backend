@@ -1,0 +1,7 @@
+PUT http://localhost:3001/api/notes/6698c6898857a68727a3ab95
+Content-Type: application/json
+
+{
+    "content": "Django's batteries make it more developer friendly",
+    "important": false
+}
