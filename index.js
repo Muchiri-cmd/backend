@@ -17,29 +17,6 @@ const requestLogger = (req,res,next) => {
 app.use(requestLogger)
 
 const Note = require('./models/note')
-let notes = [
-        {
-          id: 1,
-          content: "HTML is easy",
-          important: true
-        },
-        {
-          id: 2,
-          content: "Browser can execute only JavaScript",
-          important: false
-        },
-        {
-          id: 3,
-          content: "GET and POST are the most important methods of HTTP protocol",
-          important: true
-        }
-]
-const generateId = () => {
-    const maxId = notes.length > 0
-    ? Math.max(...notes.map(note => Number(note.id)))//map note.id to Numbers,return array and do a Math.max() on it
-    :0
-    return String(maxId + 1)//generate id for new note
-}
 
 app.get('/',(req,res) => {
     res.send('<h1>Hello World!</h1>')
@@ -65,19 +42,17 @@ app.delete('/api/notes/:id',(req,res,next)=>{
 })
 
 app.put('/api/notes/:id',(req,res,next)=>{
-    const body = req.body
-    const note = {
-        content : body.content,
-        important: body.important
-    }
+    const {content,important} = req.body
 
-    Note.findByIdAndUpdate(req.params.id,note,{new:true})
+    Note.findByIdAndUpdate(req.params.id,
+        {content,important},
+        {new:true,runValidators:true,context:'query'}
+    )
         .then(updatedNote=>res.json(updatedNote))
         .catch (err => next(err))
-
 })
 
-app.post('/api/notes',(req,res)=>{
+app.post('/api/notes',(req,res,next)=>{
     const body = req.body 
 
     if (!body.content){
@@ -89,7 +64,9 @@ app.post('/api/notes',(req,res)=>{
         important:Boolean(body.important) || false,
         // id:generateId(),
     })
-    note.save().then(savedNote=>res.json(savedNote))
+    note.save()
+        .then(savedNote=>res.json(savedNote))
+        .catch(err => next(err))
 })
 
 const unknownEndPoint = (req,res)=>{
@@ -102,6 +79,8 @@ const errorHandler = (err,req,res,next) =>{
 
     if (err.name === 'CastError'){
         return res.status(400).send({error:'malformtted id'})
+    }else if (err.name == 'ValidationError'){
+        return res.status(400).json({err:err.message})
     }
     next(err)
 }
