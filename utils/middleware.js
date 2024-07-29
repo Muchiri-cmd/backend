@@ -1,3 +1,4 @@
+const { response } = require('express')
 const logger = require('./logger')
 
 const requestLogger = (req,res,next) => {
@@ -21,6 +22,10 @@ const errorHandler = (err,req,res,next) => {
     return res.status(400).json({ err:err.message })
   } else if (err.name === 'MongoServerError' && err.message.includes('E11000 duplicate key error')){
     return res.status(400).json({ error: 'expected `username` to be unique' })
+  } else if (err.name === 'JsonWebTokenError'){
+    return response.status(401).json({ error: 'token invalid' })
+  } else if( err.name === 'TokenExpiredError'){
+    return response.status(401).json({ error:' token expired' })
   }
   next(err)
 }
